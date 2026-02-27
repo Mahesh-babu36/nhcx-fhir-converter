@@ -1,0 +1,15 @@
+Discharge Summary
+Patient Name: John Doe
+Age: 45
+Gender: Male
+Date of Admission: 2023-10-01
+Date of Discharge: 2023-10-05
+
+Primary Diagnosis: Type 2 Diabetes Mellitus
+Secondary Diagnosis: Hypertension
+
+Medications:
+- Metformin 500mg BD
+- Amlodipine 5mg OD
+
+Follow up in 2 weeks.

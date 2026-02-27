@@ -1,0 +1,20 @@
+# render.yaml — Render.com free-tier deployment configuration
+# Deploy with one click: https://render.com/deploy
+
+services:
+  - type: web
+    name: nhcx-fhir-converter
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          # Set this manually in Render dashboard
+      - key: DATABASE_PATH
+        value: /var/data/conversions.db
+    disk:
+      name: nhcx-data
+      mountPath: /var/data
+      sizeGB: 1             # Free 1 GB persistent disk for SQLite
+    autoDeploy: true
+    healthCheckPath: /health

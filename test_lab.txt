@@ -1,0 +1,11 @@
+Diagnostic Report
+Patient Name: John Doe
+Age: 45
+Gender: M
+
+Test Results:
+Hemoglobin: 14.5 g/dL (Normal: 13.5 - 17.5)
+Fasting Blood Sugar: 155 mg/dL (High) (Normal: 70 - 100)
+HbA1c: 7.2% (High) (Normal: < 5.7)
+
+Notes: Please correlate clinically.

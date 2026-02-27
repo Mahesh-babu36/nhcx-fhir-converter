@@ -1,0 +1,3304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NHCX FHIR Converter — ABDM Clinical Document Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080c14;
+      --bg2: #0d1320;
+      --bg3: #111927;
+      --bg4: #16202e;
+      --surface: #1a2535;
+      --surface2: #1f2d3f;
+      --border: #253347;
+      --border2: #2e3f56;
+      --accent: #00d4aa;
+      --accent2: #00b4e4;
+      --accent3: #7c6bff;
+      --danger: #ff4d6a;
+      --warning: #ffb347;
+      --success: #00d4aa;
+      --text: #e8edf5;
+      --text2: #9aadc2;
+      --text3: #5d7491;
+      --mono: 'DM Mono', monospace;
+      --display: 'Fraunces', serif;
+      --body: 'Plus Jakarta Sans', sans-serif;
+      --radius: 12px;
+      --radius2: 8px;
+      --shadow: 0 4px 32px rgba(0, 0, 0, 0.4);
+      --glow: 0 0 24px rgba(0, 212, 170, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── BACKGROUND GRID ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 64px;
+      background: rgba(8, 12, 20, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      gap: 0;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      margin-right: auto;
+    }
+
+    .nav-logo-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--bg);
+      letter-spacing: -1px;
+    }
+
+    .nav-logo-text {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .nav-logo-sub {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-top: 1px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text3);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      font-family: var(--body);
+      letter-spacing: 0.01em;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .nav-tab.active {
+      color: var(--accent);
+      background: rgba(0, 212, 170, 0.08);
+    }
+
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--accent);
+      background: rgba(0, 212, 170, 0.1);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+
+    .dot-live {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+      }
+    }
+
+    /* ─── PAGES ─── */
+    .page {
+      display: none;
+      padding-top: 64px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ─── HOME PAGE ─── */
+    .hero {
+      padding: 80px 64px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .hero-tag span {
+      color: var(--accent);
+    }
+
+    .hero h1 {
+      font-family: var(--display);
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--text2);
+      max-width: 600px;
+      margin-bottom: 48px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius2);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-family: var(--body);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background: #00eabb;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-outline:hover {
+      background: var(--surface);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      padding: 8px 16px;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* ─── STATS ROW ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      max-width: 1200px;
+      margin: 0 auto 64px;
+    }
+
+    .stat-item {
+      background: var(--bg2);
+      padding: 28px 32px;
+    }
+
+    .stat-value {
+      font-family: var(--display);
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--mono);
+    }
+
+    /* ─── FEATURES GRID ─── */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 64px 80px;
+    }
+
+    .section-title {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .section-sub {
+      font-size: 14px;
+      color: var(--text3);
+      margin-bottom: 32px;
+      font-family: var(--mono);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text3);
+      line-height: 1.6;
+    }
+
+    /* ─── PIPELINE VISUAL ─── */
+    .pipeline-visual {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 64px;
+    }
+
+    .pipeline-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .pipeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 100px;
+      flex: 1;
+    }
+
+    .step-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: var(--bg3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-align: center;
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    .step-arrow {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin-top: -32px;
+      min-width: 24px;
+    }
+
+    /* ─── CONVERT PAGE ─── */
+    .convert-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 64px);
+    }
+
+    .convert-sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+    }
+
+    .convert-main {
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    .sidebar-title {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--text);
+    }
+
+    /* ─── USE CASE TOGGLE ─── */
+    .use-case-toggle {
+      display: flex;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text3);
+      font-family: var(--body);
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .toggle-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* ─── DROP ZONE ─── */
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--bg3);
+      position: relative;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(0, 212, 170, 0.04);
+    }
+
+    .drop-zone input {
+      display: none;
+    }
+
+    .drop-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .drop-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .drop-sub {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    /* ─── FILE LIST ─── */
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .file-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text2);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-size {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+
+    .file-remove {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .file-remove:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* ─── FORM ELEMENTS ─── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .form-select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: var(--body);
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ─── PROCESSING PIPELINE ─── */
+    .processing-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 12, 20, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .processing-overlay.visible {
+      display: flex;
+    }
+
+    .processing-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px;
+      width: 520px;
+      max-width: 90vw;
+    }
+
+    .processing-title {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 300;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .processing-sub {
+      font-size: 13px;
+      color: var(--text3);
+      margin-bottom: 40px;
+      font-family: var(--mono);
+    }
+
+    .pipeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pipeline-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0.4;
+      transition: all 0.4s;
+    }
+
+    .pipeline-item.active {
+      opacity: 1;
+    }
+
+    .pipeline-item.done {
+      opacity: 0.7;
+    }
+
+    .pipeline-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .pipeline-item.active .pipeline-item-icon {
+      border-color: var(--accent);
+      background: rgba(0, 212, 170, 0.1);
+      animation: iconPulse 1s infinite;
+    }
+
+    .pipeline-item.done .pipeline-item-icon {
+      border-color: var(--success);
+      background: rgba(0, 212, 170, 0.1);
+    }
+
+    @keyframes iconPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(0, 212, 170, 0);
+      }
+    }
+
+    .pipeline-item-text {
+      flex: 1;
+    }
+
+    .pipeline-item-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .pipeline-item-desc {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .pipeline-item-status {
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .pipeline-item.active .pipeline-item-status {
+      color: var(--accent);
+    }
+
+    .pipeline-item.done .pipeline-item-status {
+      color: var(--success);
+    }
+
+    /* ─── RESULTS ─── */
+    .results-container {
+      display: none;
+      animation: fadeUp 0.5s ease;
+    }
+
+    .results-container.visible {
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── SCORE GAUGE ─── */
+    .score-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-bottom: 20px;
+    }
+
+    .gauge-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+    }
+
+    .gauge-svg {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: var(--border2);
+      stroke-width: 8;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gauge-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-number {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .gauge-unit {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .score-details {
+      flex: 1;
+    }
+
+    .score-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .score-status {
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .score-status.green {
+      color: var(--success);
+    }
+
+    .score-status.yellow {
+      color: var(--warning);
+    }
+
+    .score-status.orange {
+      color: var(--warning);
+    }
+
+    .score-status.red {
+      color: var(--danger);
+    }
+
+    .score-breakdown {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .breakdown-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+
+    .breakdown-label {
+      color: var(--text3);
+      margin-bottom: 2px;
+    }
+
+    .breakdown-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ─── RESULT TABS ─── */
+    .result-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .result-tab {
+      flex: 1;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--mono);
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text3);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 2px solid transparent;
+    }
+
+    .result-tab:hover {
+      color: var(--text);
+    }
+
+    .result-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: rgba(0, 212, 170, 0.04);
+    }
+
+    .result-panel {
+      display: none;
+    }
+
+    .result-panel.active {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    /* ─── INFO GRID ─── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .info-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding: 14px 16px;
+    }
+
+    .info-card-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .info-card-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .info-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: rgba(0, 212, 170, 0.15);
+      color: var(--accent);
+    }
+
+    .badge-yellow {
+      background: rgba(255, 179, 71, 0.15);
+      color: var(--warning);
+    }
+
+    .badge-red {
+      background: rgba(255, 77, 106, 0.15);
+      color: var(--danger);
+    }
+
+    .badge-blue {
+      background: rgba(0, 180, 228, 0.15);
+      color: var(--accent2);
+    }
+
+    .badge-purple {
+      background: rgba(124, 107, 255, 0.15);
+      color: var(--accent3);
+    }
+
+    /* ─── FHIR TREE VIEWER ─── */
+    .fhir-viewer {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .fhir-viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fhir-viewer-title {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text2);
+      letter-spacing: 0.05em;
+    }
+
+    .fhir-viewer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .fhir-code {
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: #a8b8ce;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre;
+    }
+
+    .fhir-code .json-key {
+      color: #7eb8e0;
+    }
+
+    .fhir-code .json-str {
+      color: #98e0a0;
+    }
+
+    .fhir-code .json-num {
+      color: #f4b76a;
+    }
+
+    .fhir-code .json-bool {
+      color: #c792ea;
+    }
+
+    .fhir-code .json-null {
+      color: #ff5370;
+    }
+
+    /* ─── RESOURCE EXPLORER ─── */
+    .resource-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .resource-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      overflow: hidden;
+    }
+
+    .resource-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .resource-header:hover {
+      background: var(--bg3);
+    }
+
+    .resource-type-badge {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .resource-id {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .resource-chevron {
+      font-size: 10px;
+      color: var(--text3);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .resource-item.expanded .resource-chevron {
+      transform: rotate(90deg);
+    }
+
+    .resource-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .resource-item.expanded .resource-body {
+      display: block;
+    }
+
+    .resource-field {
+      display: flex;
+      gap: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(37, 51, 71, 0.5);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .resource-field:last-child {
+      border-bottom: none;
+    }
+
+    .rf-key {
+      color: var(--accent2);
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+
+    .rf-val {
+      color: var(--text2);
+      word-break: break-all;
+    }
+
+    .rf-val.is-ref {
+      color: var(--accent3);
+    }
+
+    .rf-val.is-url {
+      color: var(--warning);
+      font-size: 10px;
+    }
+
+    /* ─── VALIDATION ─── */
+    .validation-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      border: 1px solid;
+    }
+
+    .validation-summary.valid {
+      background: rgba(0, 212, 170, 0.06);
+      border-color: rgba(0, 212, 170, 0.3);
+    }
+
+    .validation-summary.invalid {
+      background: rgba(255, 77, 106, 0.06);
+      border-color: rgba(255, 77, 106, 0.3);
+    }
+
+    .vs-icon {
+      font-size: 28px;
+    }
+
+    .vs-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .vs-sub {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .vs-counts {
+      margin-left: auto;
+      display: flex;
+      gap: 12px;
+    }
+
+    .count-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 14px;
+      border-radius: var(--radius2);
+      min-width: 60px;
+    }
+
+    .count-num {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .count-lbl {
+      font-size: 10px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .count-badge.errors {
+      background: rgba(255, 77, 106, 0.1);
+      color: var(--danger);
+    }
+
+    .count-badge.warnings {
+      background: rgba(255, 179, 71, 0.1);
+      color: var(--warning);
+    }
+
+    .count-badge.info {
+      background: rgba(0, 180, 228, 0.1);
+      color: var(--accent2);
+    }
+
+    .issue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .issue-item {
+      border-radius: var(--radius2);
+      border: 1px solid;
+      overflow: hidden;
+    }
+
+    .issue-item.error {
+      border-color: rgba(255, 77, 106, 0.3);
+      background: rgba(255, 77, 106, 0.04);
+    }
+
+    .issue-item.warning {
+      border-color: rgba(255, 179, 71, 0.3);
+      background: rgba(255, 179, 71, 0.04);
+    }
+
+    .issue-item.information {
+      border-color: rgba(0, 180, 228, 0.3);
+      background: rgba(0, 180, 228, 0.04);
+    }
+
+    .issue-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .issue-sev {
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .issue-item.error .issue-sev {
+      background: rgba(255, 77, 106, 0.2);
+      color: var(--danger);
+    }
+
+    .issue-item.warning .issue-sev {
+      background: rgba(255, 179, 71, 0.2);
+      color: var(--warning);
+    }
+
+    .issue-item.information .issue-sev {
+      background: rgba(0, 180, 228, 0.2);
+      color: var(--accent2);
+    }
+
+    .issue-msg {
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .issue-loc {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    .issue-body {
+      display: none;
+      padding: 10px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .issue-item.expanded .issue-body {
+      display: block;
+    }
+
+    .issue-fix {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .fix-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    /* ─── CODING RESULTS ─── */
+    .coding-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .coding-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .coding-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(37, 51, 71, 0.5);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .coding-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .coding-table tr:hover td {
+      background: var(--bg3);
+    }
+
+    .coding-confidence {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conf-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      width: 60px;
+      overflow: hidden;
+    }
+
+    .conf-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    /* ─── HISTORY PAGE ─── */
+    .history-layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 64px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .history-table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .htable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .htable th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .htable td {
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text2);
+      border-bottom: 1px solid rgba(37, 51, 71, 0.5);
+      font-family: var(--mono);
+    }
+
+    .htable tr:last-child td {
+      border-bottom: none;
+    }
+
+    .htable tr:hover td {
+      background: var(--bg3);
+      cursor: pointer;
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.valid::before {
+      background: var(--success);
+    }
+
+    .status-dot.invalid::before {
+      background: var(--danger);
+    }
+
+    /* ─── DOCS PAGE ─── */
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: calc(100vh - 64px);
+    }
+
+    .docs-nav {
+      padding: 32px 24px;
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+
+    .docs-nav-title {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+      margin-top: 20px;
+    }
+
+    .docs-nav-title:first-child {
+      margin-top: 0;
+    }
+
+    .docs-nav-link {
+      display: block;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text3);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+    }
+
+    .docs-nav-link:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .docs-nav-link.active {
+      color: var(--accent);
+      background: rgba(0, 212, 170, 0.08);
+    }
+
+    .docs-content {
+      padding: 40px 48px;
+      max-width: 800px;
+    }
+
+    .docs-h1 {
+      font-family: var(--display);
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .docs-h2 {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--text);
+      margin: 40px 0 12px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .docs-p {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .docs-code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent2);
+      overflow-x: auto;
+      margin-bottom: 20px;
+      white-space: pre;
+      line-height: 1.7;
+    }
+
+    .endpoint-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .method-badge {
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .method-badge.get {
+      background: rgba(0, 180, 228, 0.2);
+      color: var(--accent2);
+    }
+
+    .method-badge.post {
+      background: rgba(0, 212, 170, 0.2);
+      color: var(--accent);
+    }
+
+    .endpoint-path {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .endpoint-desc {
+      font-size: 12px;
+      color: var(--text3);
+      margin-left: auto;
+    }
+
+    .endpoint-body {
+      padding: 16px 20px;
+    }
+
+    /* ─── SETTINGS ─── */
+    .settings-layout {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 64px;
+    }
+
+    .settings-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .settings-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    .settings-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .settings-section-sub {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(37, 51, 71, 0.5);
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-row-label {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .settings-row-desc {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    .form-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: var(--mono);
+      outline: none;
+      transition: border-color 0.2s;
+      width: 240px;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+    }
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--text3);
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s;
+    }
+
+    .toggle-switch input:checked+.toggle-track {
+      background: rgba(0, 212, 170, 0.2);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-track::after {
+      background: var(--accent);
+      left: 20px;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px;
+      text-align: center;
+      color: var(--text3);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text3);
+      max-width: 300px;
+      line-height: 1.6;
+    }
+
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: slideInRight 0.3s ease;
+      max-width: 360px;
+      min-width: 280px;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .toast-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .toast-text {
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text3);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .convert-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .convert-sidebar {
+        height: auto;
+        position: relative;
+        top: 0;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .hero {
+        padding: 48px 24px 40px;
+      }
+
+      .section {
+        padding: 0 24px 60px;
+      }
+
+      .docs-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .docs-nav {
+        display: none;
+      }
+
+      .history-layout {
+        padding: 32px 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#" onclick="showPage('home')">
+      <div class="nav-logo-mark">Fx</div>
+      <div>
+        <div class="nav-logo-text">NHCX Converter</div>
+        <div class="nav-logo-sub">ABDM · FHIR · Clinical Intelligence</div>
+      </div>
+    </a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('home')" id="tab-home">Home</button>
+      <button class="nav-tab" onclick="showPage('convert')" id="tab-convert">Convert</button>
+      <button class="nav-tab" onclick="showPage('history')" id="tab-history">History</button>
+      <button class="nav-tab" onclick="showPage('settings')" id="tab-settings">Settings</button>
+    </div>
+    <div class="nav-badge">
+      <span class="dot-live"></span>
+      v1.0.0 · Live
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- PROCESSING OVERLAY -->
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="processing-card">
+      <div class="processing-title">Processing Document</div>
+      <div class="processing-sub" id="processingFile">Initializing pipeline...</div>
+      <div class="pipeline-list" id="pipelineList">
+        <div class="pipeline-item" id="step-extract">
+          <div class="pipeline-item-icon">📄</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">PDF Extraction</div>
+            <div class="pipeline-item-desc">Reading text from document pages</div>
+          </div>
+          <div class="pipeline-item-status" id="step-extract-status">waiting</div>
+        </div>
+        <div class="pipeline-item" id="step-detect">
+          <div class="pipeline-item-icon">🔍</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">HI Type Detection</div>
+            <div class="pipeline-item-desc">Identifying ABDM Health Information type</div>
+          </div>
+          <div class="pipeline-item-status" id="step-detect-status">waiting</div>
+        </div>
+        <div class="pipeline-item" id="step-ai">
+          <div class="pipeline-item-icon">🤖</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">AI Clinical Extraction</div>
+            <div class="pipeline-item-desc">Gemini extracting structured clinical data</div>
+          </div>
+          <div class="pipeline-item-status" id="step-ai-status">waiting</div>
+        </div>
+        <div class="pipeline-item" id="step-code">
+          <div class="pipeline-item-icon">🏷️</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">Clinical Coding</div>
+            <div class="pipeline-item-desc">Auto-mapping ICD-10 and LOINC codes</div>
+          </div>
+          <div class="pipeline-item-status" id="step-code-status">waiting</div>
+        </div>
+        <div class="pipeline-item" id="step-fhir">
+          <div class="pipeline-item-icon">🏗️</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">FHIR Bundle Construction</div>
+            <div class="pipeline-item-desc">Building ABDM/NHCX compliant resources</div>
+          </div>
+          <div class="pipeline-item-status" id="step-fhir-status">waiting</div>
+        </div>
+        <div class="pipeline-item" id="step-validate">
+          <div class="pipeline-item-icon">✅</div>
+          <div class="pipeline-item-text">
+            <div class="pipeline-item-name">NRCeS Profile Validation</div>
+            <div class="pipeline-item-desc">Verifying conformance to NHCX profiles</div>
+          </div>
+          <div class="pipeline-item-status" id="step-validate-status">waiting</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════════════════ -->
+  <div class="page active" id="page-home">
+
+    <div class="hero">
+      <div class="hero-tag">
+        <span>ABDM</span> · NHCX · NRCeS · FHIR R4
+      </div>
+      <h1>Clinical Documents<br />to <em>Structured FHIR</em><br />Intelligence</h1>
+      <p class="hero-desc">
+        Open-source microservice that ingests healthcare PDFs — discharge summaries
+        and diagnostic reports — and converts them into NHCX-compliant FHIR bundles
+        for claim submission and pre-authorisation workflows.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="showPage('convert')">
+          ⚡ Start Converting
+        </button>
+        <button class="btn btn-outline" onclick="showPage('docs')">
+          📖 API Docs
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-row" style="margin:0 64px 64px;">
+      <div class="stat-item">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Conversions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">2</div>
+        <div class="stat-label">HI Types Supported</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">100+</div>
+        <div class="stat-label">ICD-10 Codes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">₹0</div>
+        <div class="stat-label">Infrastructure Cost</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Processing Pipeline</div>
+      <div class="section-sub">→ Every PDF goes through 6 intelligent stages</div>
+
+      <div class="pipeline-visual" style="margin-top:20px;">
+        <div class="pipeline-steps">
+          <div class="pipeline-step">
+            <div class="step-circle">📄</div>
+            <div class="step-label">PDF<br />Input</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">🔍</div>
+            <div class="step-label">HI Type<br />Detection</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">🤖</div>
+            <div class="step-label">AI Data<br />Extraction</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">🏷️</div>
+            <div class="step-label">ICD-10<br />LOINC Coding</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">🏗️</div>
+            <div class="step-label">FHIR<br />Builder</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">✅</div>
+            <div class="step-label">NRCeS<br />Validation</div>
+          </div>
+          <div class="step-arrow"></div>
+          <div class="pipeline-step">
+            <div class="step-circle">📦</div>
+            <div class="step-label">NHCX<br />Bundle</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Unique Capabilities</div>
+      <div class="section-sub">→ What makes this different from every other solution</div>
+      <div class="features-grid" style="margin-top:20px;">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(0,212,170,0.1);">🏗️</div>
+          <div class="feature-title">ABDM Composition Resource</div>
+          <div class="feature-desc">Every bundle starts with a Composition resource using official ABDM SNOMED CT HI
+            type codes — not a generic collection bundle.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(0,180,228,0.1);">🔗</div>
+          <div class="feature-title">Multi-Document Fusion</div>
+          <div class="feature-desc">Merge up to 5 PDFs — discharge summary + lab reports — into one coherent NHCX claim
+            bundle with conflict detection.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(124,107,255,0.1);">🏷️</div>
+          <div class="feature-title">Offline ICD-10 + LOINC Coding</div>
+          <div class="feature-desc">Clinical coding engine maps diagnoses to ICD-10 and lab tests to LOINC codes with
+            confidence scoring — no external API needed.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(255,179,71,0.1);">📋</div>
+          <div class="feature-title">FHIR OperationOutcome</div>
+          <div class="feature-desc">Validation errors are returned as proper FHIR OperationOutcome resources — the
+            standard NHCX systems expect, not custom JSON.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(255,77,106,0.1);">📎</div>
+          <div class="feature-title">DocumentReference Embed</div>
+          <div class="feature-desc">Original PDFs are embedded as base64 in DocumentReference resources — creating a
+            complete audit trail inside the bundle.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(0,212,170,0.1);">🔄</div>
+          <div class="feature-title">Pre-Auth + Claim Both</div>
+          <div class="feature-desc">One switch changes Claim to CoverageEligibilityRequest — supporting both claim
+            submission and pre-authorisation workflows.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+     CONVERT PAGE
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-convert">
+    <div class="convert-layout">
+
+      <!-- SIDEBAR -->
+      <div class="convert-sidebar">
+        <div class="sidebar-title">Document Converter</div>
+
+        <!-- Use Case Toggle -->
+        <div class="form-group">
+          <div class="form-label">Use Case</div>
+          <div class="use-case-toggle">
+            <button class="toggle-btn active" id="uc-claim" onclick="setUseCase('claim')">
+              📋 Claim Submission
+            </button>
+            <button class="toggle-btn" id="uc-preauth" onclick="setUseCase('preauthorization')">
+              🔐 Pre-Authorization
+            </button>
+          </div>
+        </div>
+
+        <!-- Hospital Template -->
+        <div class="form-group">
+          <div class="form-label">Hospital Template</div>
+          <select class="form-select" id="hospitalTemplate">
+            <option value="default">Default (Generic)</option>
+            <option value="govt">Government Hospital</option>
+            <option value="private">Private Hospital</option>
+            <option value="lab">Diagnostic Lab</option>
+          </select>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="form-group">
+          <div class="form-label">Upload PDFs (max 5)</div>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+            ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <input type="file" id="fileInput" accept=".pdf" multiple onchange="handleFileSelect(event)" />
+            <span class="drop-icon">📂</span>
+            <div class="drop-title">Drop PDFs here</div>
+            <div class="drop-sub">or click to browse • PDF files only</div>
+          </div>
+        </div>
+
+        <!-- File List -->
+        <div id="fileList" class="file-list" style="display:none;"></div>
+
+        <!-- Convert Button -->
+        <button class="btn btn-primary" id="convertBtn" onclick="startConversion()"
+          style="width:100%;justify-content:center;padding:14px;" disabled>
+          ⚡ Convert to FHIR Bundle
+        </button>
+
+        <!-- Clear Button -->
+        <button class="btn btn-ghost" onclick="clearAll()" style="width:100%;justify-content:center;">
+          Clear All
+        </button>
+
+        <!-- Quick Info -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;">WHAT GETS BUILT
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="font-size:12px;color:var(--text2);">✓ Composition (ABDM SNOMED)</div>
+            <div style="font-size:12px;color:var(--text2);">✓ Patient · Organization</div>
+            <div style="font-size:12px;color:var(--text2);">✓ Condition (ICD-10 coded)</div>
+            <div style="font-size:12px;color:var(--text2);">✓ DiagnosticReport + Observations</div>
+            <div style="font-size:12px;color:var(--text2);">✓ Claim / CoverageEligibilityRequest</div>
+            <div style="font-size:12px;color:var(--text2);">✓ DocumentReference (PDF embed)</div>
+            <div style="font-size:12px;color:var(--text2);">✓ Provenance tracking</div>
+            <div style="font-size:12px;color:var(--text2);">✓ OperationOutcome validation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN RESULTS AREA -->
+      <div class="convert-main">
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🏥</div>
+          <div class="empty-title">No documents uploaded yet</div>
+          <div class="empty-desc">Upload one or more clinical PDFs to convert them into an NHCX-compliant FHIR bundle
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-container" id="resultsContainer">
+
+          <!-- Score Card -->
+          <div class="score-card" id="scoreCard">
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 100 100">
+                <circle class="gauge-bg" cx="50" cy="50" r="45" />
+                <circle class="gauge-fill" id="gaugeFill" cx="50" cy="50" r="45" />
+              </svg>
+              <div class="gauge-text">
+                <div class="gauge-number" id="gaugeNumber">0</div>
+                <div class="gauge-unit">/ 100</div>
+              </div>
+            </div>
+            <div class="score-details">
+              <div class="score-title">NHCX Readiness Score</div>
+              <div class="score-status" id="scoreStatus">Calculating...</div>
+              <div class="score-breakdown" id="scoreBreakdown"></div>
+            </div>
+            <div style="margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+              <span class="info-card-badge" id="docTypeBadge"
+                style="padding:5px 12px;border-radius:8px;font-size:12px;"></span>
+              <span class="info-card-badge" id="useCaseBadge"
+                style="padding:5px 12px;border-radius:8px;font-size:12px;"></span>
+            </div>
+          </div>
+
+          <!-- Result Tabs -->
+          <div class="result-tabs">
+            <button class="result-tab active" onclick="showResultTab('clinical')" id="rtab-clinical">Clinical
+              Data</button>
+            <button class="result-tab" onclick="showResultTab('resources')" id="rtab-resources">FHIR Resources</button>
+            <button class="result-tab" onclick="showResultTab('bundle')" id="rtab-bundle">Bundle JSON</button>
+            <button class="result-tab" onclick="showResultTab('validation')" id="rtab-validation">Validation <span
+                id="validationBadgeCount"></span></button>
+            <button class="result-tab" onclick="showResultTab('coding')" id="rtab-coding">Coding</button>
+            <button class="result-tab" onclick="showResultTab('conflicts')" id="rtab-conflicts">Conflicts</button>
+          </div>
+
+          <!-- CLINICAL DATA -->
+          <div class="result-panel active" id="rpanel-clinical">
+            <div class="info-grid" id="clinicalGrid"></div>
+            <div id="medicationsSection" style="display:none;margin-top:16px;">
+              <div
+                style="font-size:12px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">
+                Medications at Discharge</div>
+              <div id="medicationsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+            <div id="proceduresSection" style="display:none;margin-top:16px;">
+              <div
+                style="font-size:12px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">
+                Procedures Performed</div>
+              <div id="proceduresList" style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+          </div>
+
+          <!-- FHIR RESOURCES -->
+          <div class="result-panel" id="rpanel-resources">
+            <div class="resource-list" id="resourceList"></div>
+          </div>
+
+          <!-- BUNDLE JSON -->
+          <div class="result-panel" id="rpanel-bundle">
+            <div class="fhir-viewer">
+              <div class="fhir-viewer-header">
+                <div class="fhir-viewer-title">NHCX FHIR Bundle · application/fhir+json</div>
+                <div class="fhir-viewer-actions">
+                  <button class="btn btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="copyBundle()">📋
+                    Copy</button>
+                  <button class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="downloadBundle()">⬇
+                    Download</button>
+                </div>
+              </div>
+              <div class="fhir-code" id="bundleOutput"></div>
+            </div>
+          </div>
+
+          <!-- VALIDATION -->
+          <div class="result-panel" id="rpanel-validation">
+            <div class="validation-summary" id="validationSummary">
+              <div class="vs-icon" id="vsIcon"></div>
+              <div>
+                <div class="vs-title" id="vsTitle"></div>
+                <div class="vs-sub" id="vsSub"></div>
+              </div>
+              <div class="vs-counts" id="vsCounts"></div>
+            </div>
+            <div class="issue-list" id="issueList"></div>
+          </div>
+
+          <!-- CODING -->
+          <div class="result-panel" id="rpanel-coding">
+            <div
+              style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+              <table class="coding-table">
+                <thead>
+                  <tr>
+                    <th>Term</th>
+                    <th>System</th>
+                    <th>Code</th>
+                    <th>Display</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="codingTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CONFLICTS -->
+          <div class="result-panel" id="rpanel-conflicts">
+            <div id="conflictsContent"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+     HISTORY PAGE
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-history">
+    <div class="history-layout">
+      <div class="history-header">
+        <div>
+          <div class="section-title">Conversion History</div>
+          <div class="section-sub">→ All previous conversions stored locally</div>
+        </div>
+        <button class="btn btn-outline" onclick="clearHistory()">🗑 Clear History</button>
+      </div>
+      <div class="history-table-wrap">
+        <table class="htable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>File Name</th>
+              <th>Document Type</th>
+              <th>Patient</th>
+              <th>Hospital</th>
+              <th>Valid</th>
+              <th>Score</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+          </tbody>
+        </table>
+        <div class="empty-state" id="historyEmpty" style="display:none;">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">No conversions yet</div>
+          <div class="empty-desc">Your conversion history will appear here after you convert documents</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+     SETTINGS PAGE
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-settings">
+    <div class="settings-layout">
+      <div style="margin-bottom:32px;">
+        <div class="section-title">Settings</div>
+        <div class="section-sub">→ Configure the converter for your environment</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <div class="settings-section-title">API Configuration</div>
+          <div class="settings-section-sub">Connection settings for the backend service</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Backend API URL</div>
+            <div class="settings-row-desc">URL where the FastAPI service is running</div>
+          </div>
+          <input class="form-input" type="text" id="apiUrl" value="http://localhost:8000"
+            placeholder="http://localhost:8000" />
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">API Status</div>
+            <div class="settings-row-desc">Check if backend is reachable</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="apiStatus" style="font-size:12px;font-family:var(--mono);color:var(--text3);">Not checked</span>
+            <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;"
+              onclick="checkApiStatus()">Check</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <div class="settings-section-title">Conversion Defaults</div>
+          <div class="settings-section-sub">Default options for new conversions</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Default Use Case</div>
+            <div class="settings-row-desc">Claim or Pre-Authorization</div>
+          </div>
+          <select class="form-select" id="defaultUseCase" style="width:200px;">
+            <option value="claim">Claim Submission</option>
+            <option value="preauthorization">Pre-Authorization</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Auto-Download Bundle</div>
+            <div class="settings-row-desc">Automatically download JSON after conversion</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoDownload" />
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Save to History</div>
+            <div class="settings-row-desc">Store conversion results in local history</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="saveHistory" checked />
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <div class="settings-section-title">About</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Version</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--text3);">v1.0.0</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Standard</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--text3);">FHIR R4 · ABDM IG v3.0 · NHCX IG</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">License</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:13px;color:var(--text3);">MIT Open Source</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:8px;">Save Settings</button>
+    </div>
+  </div>
+
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    // ─── STATE ───────────────────────────────────────────
+    const state = {
+      files: [],
+      useCase: 'claim',
+      result: null,
+      history: JSON.parse(localStorage.getItem('nhcx_history') || '[]'),
+      apiUrl: localStorage.getItem('nhcx_api_url') || (window.location.protocol === 'file:' || window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1' ? 'http://localhost:8000' : window.location.origin)
+    };
+
+    // ─── NAVIGATION ──────────────────────────────────────
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.getElementById('tab-' + page).classList.add('active');
+
+      if (page === 'history') renderHistory();
+      if (page === 'home') updateStats();
+    }
+
+    // ─── USE CASE ────────────────────────────────────────
+    function setUseCase(uc) {
+      state.useCase = uc;
+      document.getElementById('uc-claim').classList.toggle('active', uc === 'claim');
+      document.getElementById('uc-preauth').classList.toggle('active', uc === 'preauthorization');
+    }
+
+    // ─── FILE HANDLING ───────────────────────────────────
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('dropZone').classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      document.getElementById('dropZone').classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('dropZone').classList.remove('drag-over');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+      addFiles(files);
+    }
+
+    function handleFileSelect(e) {
+      const files = Array.from(e.target.files);
+      addFiles(files);
+      e.target.value = '';
+    }
+
+    function addFiles(newFiles) {
+      newFiles.forEach(f => {
+        if (state.files.length >= 5) { showToast('Max 5 files allowed', 'warning'); return; }
+        if (!state.files.find(x => x.name === f.name)) {
+          state.files.push(f);
+        }
+      });
+      renderFileList();
+      document.getElementById('convertBtn').disabled = state.files.length === 0;
+      document.getElementById('emptyState').style.display = state.files.length > 0 ? 'none' : 'flex';
+    }
+
+    function removeFile(name) {
+      state.files = state.files.filter(f => f.name !== name);
+      renderFileList();
+      document.getElementById('convertBtn').disabled = state.files.length === 0;
+      if (state.files.length === 0) {
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('resultsContainer').classList.remove('visible');
+      }
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      if (state.files.length === 0) { list.style.display = 'none'; return; }
+      list.style.display = 'flex';
+      list.innerHTML = state.files.map(f => `
+    <div class="file-item">
+      <span class="file-icon">📄</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${formatFileSize(f.size)}</span>
+      <button class="file-remove" onclick="removeFile('${f.name}')">✕</button>
+    </div>
+  `).join('');
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    function clearAll() {
+      state.files = [];
+      state.result = null;
+      renderFileList();
+      document.getElementById('convertBtn').disabled = true;
+      document.getElementById('emptyState').style.display = 'flex';
+      document.getElementById('resultsContainer').classList.remove('visible');
+    }
+
+    // ─── CONVERSION ──────────────────────────────────────
+    async function startConversion() {
+      if (state.files.length === 0) return;
+
+      showProcessing(true);
+      await animatePipeline();
+
+      const formData = new FormData();
+      const endpoint = state.files.length > 1 ? '/convert/claim' : '/convert';
+
+      if (state.files.length > 1) {
+        state.files.forEach(f => formData.append('files', f));
+      } else {
+        formData.append('file', state.files[0]);
+      }
+      formData.append('use_case', state.useCase);
+
+      try {
+        const res = await fetch(state.apiUrl + endpoint, {
+          method: 'POST',
+          body: formData
+        });
+
+        showProcessing(false);
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          showToast('Conversion failed: ' + (err.detail || 'Server error'), 'error');
+          return;
+        }
+
+        const data = await res.json();
+        state.result = data;
+        saveToHistory(data);
+        renderResults(data);
+        document.getElementById('resultsContainer').classList.add('visible');
+        document.getElementById('emptyState').style.display = 'none';
+        showToast('Conversion successful!', 'success');
+
+        if (document.getElementById('autoDownload').checked) {
+          downloadBundle();
+        }
+
+      } catch (err) {
+        showProcessing(false);
+        // Show a clear error — do NOT silently replace real results with fake demo data
+        console.error('API fetch error:', err);
+        showToast('⚠️ Cannot reach the API server. Check Settings tab to configure the correct URL.', 'error');
+
+        // Only show demo data if the user explicitly requests it via the demo button
+        // Do NOT auto-inject fake data silently
+      }
+    }
+
+    // ─── MOCK DATA FOR DEMO ──────────────────────────────
+    // ─── PIPELINE ANIMATION ──────────────────────────────
+    async function animatePipeline() {
+      const steps = ['extract', 'detect', 'ai', 'code', 'fhir', 'validate'];
+      const labels = ['Extracting text...', 'Detecting HI type...', 'AI extracting data...', 'Coding ICD-10/LOINC...', 'Building FHIR bundle...', 'Validating against NRCeS...'];
+
+      for (let i = 0; i < steps.length; i++) {
+        const el = document.getElementById('step-' + steps[i]);
+        const st = document.getElementById('step-' + steps[i] + '-status');
+        document.getElementById('processingFile').textContent = labels[i];
+
+        if (i > 0) {
+          const prev = document.getElementById('step-' + steps[i - 1]);
+          prev.classList.remove('active');
+          prev.classList.add('done');
+          document.getElementById('step-' + steps[i - 1] + '-status').textContent = '✓ done';
+        }
+
+        el.classList.add('active');
+        st.textContent = 'processing...';
+        await sleep(800);
+      }
+
+      const lastEl = document.getElementById('step-validate');
+      lastEl.classList.remove('active');
+      lastEl.classList.add('done');
+      document.getElementById('step-validate-status').textContent = '✓ done';
+      await sleep(400);
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function showProcessing(show) {
+      const ov = document.getElementById('processingOverlay');
+      if (show) {
+        ov.classList.add('visible');
+        document.querySelectorAll('.pipeline-item').forEach(el => {
+          el.classList.remove('active', 'done');
+        });
+        document.querySelectorAll('.pipeline-item-status').forEach(el => {
+          el.textContent = 'waiting';
+        });
+      } else {
+        ov.classList.remove('visible');
+      }
+    }
+
+    // ─── RENDER RESULTS ──────────────────────────────────
+    function renderResults(data) {
+      const cd = data.clinical_data || {};
+      const val = data.validation || {};
+      const readiness = val.readiness || {};
+      const pipeline = data.pipeline || {};
+      const detection = pipeline.detection || data.detection || {};
+
+      // Score gauge
+      const score = readiness.score || 0;
+      const circumference = 283;
+      const offset = circumference - (score / 100 * circumference);
+      setTimeout(() => {
+        document.getElementById('gaugeFill').style.strokeDashoffset = offset;
+      }, 300);
+
+      animateNumber('gaugeNumber', 0, score, 1500);
+
+      const color = readiness.color || 'green';
+      const colorMap = { green: 'var(--success)', yellow: 'var(--warning)', orange: 'var(--warning)', red: 'var(--danger)' };
+      document.getElementById('gaugeFill').style.stroke = colorMap[color] || 'var(--accent)';
+      document.getElementById('scoreStatus').textContent = readiness.status || '';
+      document.getElementById('scoreStatus').className = 'score-status ' + color;
+
+      document.getElementById('scoreBreakdown').innerHTML = `
+    <div class="breakdown-item">
+      <div class="breakdown-label">Errors</div>
+      <div class="breakdown-value" style="color:${val.error_count > 0 ? 'var(--danger)' : 'var(--success)'}">${val.error_count || 0}</div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-label">Warnings</div>
+      <div class="breakdown-value" style="color:var(--warning)">${val.warning_count || 0}</div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-label">Confidence</div>
+      <div class="breakdown-value">${detection.confidence_percent || 0}%</div>
+    </div>
+  `;
+
+      const docType = (data.doc_type || detection.doc_type || 'unknown').replace('_', ' ').toUpperCase();
+      document.getElementById('docTypeBadge').textContent = docType;
+      document.getElementById('docTypeBadge').className = 'info-card-badge badge-blue';
+      document.getElementById('useCaseBadge').textContent = (state.useCase === 'claim' ? 'CLAIM' : 'PRE-AUTH');
+      document.getElementById('useCaseBadge').className = 'info-card-badge badge-purple';
+
+      // Validation badge count
+      const totalIssues = (val.error_count || 0) + (val.warning_count || 0);
+      document.getElementById('validationBadgeCount').innerHTML = totalIssues > 0
+        ? `<span style="background:${val.error_count > 0 ? 'var(--danger)' : 'var(--warning)'};color:white;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;">${totalIssues}</span>`
+        : '';
+
+      // Render clinical data
+      renderClinicalData(cd);
+
+      // Render FHIR resources
+      renderFHIRResources(data.fhir_bundle);
+
+      // Render bundle JSON
+      document.getElementById('bundleOutput').innerHTML = syntaxHighlight(JSON.stringify(data.fhir_bundle, null, 2));
+
+      // Render validation
+      renderValidation(val);
+
+      // Render coding
+      renderCoding(cd);
+
+      // Render conflicts
+      renderConflicts(data.fusion || {});
+
+      // Render extraction summary banner (jury-facing at-a-glance view)
+      renderExtractionSummary(data, cd, val);
+    }
+
+    function renderExtractionSummary(data, cd, val) {
+      const tests = cd.tests || [];
+      const meds = cd.medications_at_discharge || [];
+      const procs = cd.procedures_performed || [];
+      const icd = cd.primary_diagnosis_coding || {};
+      const abnormal = tests.filter(t => t.abnormal_flag && t.abnormal_flag !== 'NORMAL').length;
+      const loinc_coded = tests.filter(t => t.loinc_coding && t.loinc_coding.matched).length;
+      const fhirResCount = (data.fhir_bundle?.entry || []).length;
+      const fieldsExtracted = Object.keys(cd).filter(k => cd[k] !== null && cd[k] !== '' && !Array.isArray(cd[k])).length;
+      const confidence = (data.detection_confidence || data.pipeline?.detection?.confidence_percent || 0);
+
+      // Remove any existing summary
+      const old = document.getElementById('extractionSummaryBanner');
+      if (old) old.remove();
+
+      const scoreRef = document.getElementById('scoreCard');
+      if (!scoreRef) return;
+
+      const banner = document.createElement('div');
+      banner.id = 'extractionSummaryBanner';
+      banner.style.cssText = `
+        background: linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(0,180,228,0.08) 100%);
+        border: 1px solid rgba(0,212,170,0.25);
+        border-radius: 14px;
+        padding: 18px 24px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 14px;
+      `;
+
+      const items = [
+        { icon: '🧠', label: 'Fields Extracted', value: fieldsExtracted, color: '#00d4aa' },
+        { icon: '🔬', label: 'Lab Tests Found', value: tests.length, color: '#00b4e4' },
+        { icon: '⚠️', label: 'Abnormal Flags', value: abnormal, color: abnormal > 0 ? '#ff4d6a' : '#00d4aa' },
+        { icon: '💊', label: 'Medications', value: meds.length, color: '#7c6bff' },
+        { icon: '🏷️', label: 'ICD-10 Coded', value: icd.matched ? icd.code : 'N/A', color: icd.matched ? '#00d4aa' : '#9aadc2' },
+        { icon: '📋', label: 'LOINC Coded Tests', value: loinc_coded + '/' + tests.length, color: '#ffb347' },
+        { icon: '📦', label: 'FHIR Resources', value: fhirResCount, color: '#4ecdc4' },
+        { icon: '🎯', label: 'Detection Confidence', value: confidence.toFixed(0) + '%', color: confidence >= 80 ? '#00d4aa' : '#ffb347' },
+      ];
+
+      banner.innerHTML = `
+        <div style="grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">
+          🤖 AI Extraction Summary
+        </div>
+        ${items.map(it => `
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">${it.icon} ${it.label}</div>
+            <div style="font-size:18px;font-weight:700;color:${it.color};font-family:var(--mono);">${it.value}</div>
+          </div>
+        `).join('')}
+      `;
+
+      scoreRef.insertAdjacentElement('afterend', banner);
+    }
+
+    function animateNumber(id, from, to, duration) {
+      const el = document.getElementById(id);
+      const start = performance.now();
+      function update(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(from + (to - from) * ease);
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    function renderClinicalData(cd) {
+      const fields = [
+        ['Patient Name', cd.patient_name],
+        ['Age', cd.patient_age],
+        ['Gender', cd.patient_gender],
+        ['Patient ID', cd.patient_id],
+        ['Hospital', cd.hospital_name],
+        ['Treating Doctor', cd.treating_doctor || cd.referring_doctor],
+        ['Qualification', cd.doctor_qualification],
+        ['Admission Date', cd.admission_date],
+        ['Discharge Date', cd.discharge_date],
+        ['Ward', cd.ward],
+        ['Primary Diagnosis', cd.primary_diagnosis],
+        ['ICD-10 Code', cd.primary_diagnosis_icd10],
+        ['Chief Complaint', cd.chief_complaint],
+        ['Condition at Discharge', cd.condition_at_discharge],
+        ['Insurer', cd.insurer_name],
+        ['Policy Number', cd.insurance_id],
+      ].filter(([, v]) => v !== null && v !== undefined && v !== '');
+
+      document.getElementById('clinicalGrid').innerHTML = fields.map(([label, value]) => `
+    <div class="info-card">
+      <div class="info-card-label">${label}</div>
+      <div class="info-card-value">${value}</div>
+    </div>
+  `).join('');
+
+      // Medications
+      const meds = cd.medications_at_discharge || [];
+      if (meds.length > 0) {
+        document.getElementById('medicationsSection').style.display = 'block';
+        document.getElementById('medicationsList').innerHTML = meds.map(m => `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:flex;gap:16px;font-size:12px;font-family:var(--mono);">
+        <span style="color:var(--accent2);">${m.name || m}</span>
+        ${m.dose ? `<span style="color:var(--text3);">${m.dose}</span>` : ''}
+        ${m.frequency ? `<span style="color:var(--text3);">${m.frequency}</span>` : ''}
+      </div>
+    `).join('');
+      }
+
+      // Procedures
+      const procs = cd.procedures_performed || [];
+      if (procs.length > 0) {
+        document.getElementById('proceduresSection').style.display = 'block';
+        document.getElementById('proceduresList').innerHTML = procs.map(p => `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:12px;font-family:var(--mono);color:var(--text2);">
+        ⚕ ${p}
+      </div>
+    `).join('');
+      }
+    }
+
+    function renderFHIRResources(bundle) {
+      if (!bundle || !bundle.entry) return;
+      const typeColors = {
+        Composition: '#00d4aa', Patient: '#00b4e4', Organization: '#7c6bff',
+        Practitioner: '#ffb347', Encounter: '#ff7eb6', Condition: '#ff4d6a',
+        DiagnosticReport: '#4ecdc4', Observation: '#95e1d3', Claim: '#f9ca24',
+        CoverageEligibilityRequest: '#f0932b', DocumentReference: '#a29bfe', Provenance: '#fd79a8'
+      };
+
+      document.getElementById('resourceList').innerHTML = bundle.entry.map((entry, idx) => {
+        const res = entry.resource;
+        const rt = res.resourceType;
+        const color = typeColors[rt] || '#9aadc2';
+        const fields = flattenResource(res);
+
+        return `
+      <div class="resource-item" id="res-${idx}">
+        <div class="resource-header" onclick="toggleResource(${idx})">
+          <span class="resource-type-badge" style="background:${color}22;color:${color};">${rt}</span>
+          <span class="resource-id">${entry.fullUrl || ''}</span>
+          <span class="resource-chevron">▶</span>
+        </div>
+        <div class="resource-body">
+          ${fields.map(([k, v]) => `
+            <div class="resource-field">
+              <span class="rf-key">${k}</span>
+              <span class="rf-val ${v.startsWith('urn:uuid') ? 'is-ref' : ''} ${v.startsWith('https://nrces') ? 'is-url' : ''}">${v}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+      }).join('');
+    }
+
+    function flattenResource(obj, prefix = '', depth = 0) {
+      const result = [];
+      if (depth > 3) return result;
+      for (const [k, v] of Object.entries(obj)) {
+        if (k === 'resourceType' || k === 'id' || k === 'meta') continue;
+        const key = prefix ? `${prefix}.${k}` : k;
+        if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+          result.push(...flattenResource(v, key, depth + 1));
+        } else if (Array.isArray(v)) {
+          if (v.length > 0 && typeof v[0] === 'object') {
+            result.push(...flattenResource(v[0], key + '[0]', depth + 1));
+          } else {
+            result.push([key, v.join(', ')]);
+          }
+        } else {
+          result.push([key, String(v || '')]);
+        }
+      }
+      return result.slice(0, 12);
+    }
+
+    function toggleResource(idx) {
+      document.getElementById('res-' + idx).classList.toggle('expanded');
+    }
+
+    function renderValidation(val) {
+      const isValid = val.valid;
+      const summary = document.getElementById('validationSummary');
+      summary.className = 'validation-summary ' + (isValid ? 'valid' : 'invalid');
+
+      document.getElementById('vsIcon').textContent = isValid ? '✅' : '❌';
+      document.getElementById('vsTitle').textContent = isValid ? 'Bundle is valid' : 'Validation failed';
+      document.getElementById('vsSub').textContent = val.summary || '';
+
+      document.getElementById('vsCounts').innerHTML = `
+    <div class="count-badge errors">
+      <div class="count-num">${val.error_count || 0}</div>
+      <div class="count-lbl">Errors</div>
+    </div>
+    <div class="count-badge warnings">
+      <div class="count-num">${val.warning_count || 0}</div>
+      <div class="count-lbl">Warnings</div>
+    </div>
+    <div class="count-badge info">
+      <div class="count-num">${val.info_count || 0}</div>
+      <div class="count-lbl">Info</div>
+    </div>
+  `;
+
+      const allIssues = [
+        ...(val.errors || []),
+        ...(val.warnings || []),
+        ...(val.suggestions || [])
+      ];
+
+      document.getElementById('issueList').innerHTML = allIssues.length === 0
+        ? '<div class="empty-state" style="padding:40px;"><div class="empty-icon">🎉</div><div class="empty-title">No issues found</div><div class="empty-desc">Bundle fully conforms to NHCX profiles</div></div>'
+        : allIssues.map((issue, idx) => `
+      <div class="issue-item ${issue.severity}" id="issue-${idx}">
+        <div class="issue-header" onclick="toggleIssue(${idx})">
+          <span class="issue-sev">${issue.severity}</span>
+          <span class="issue-msg">${issue.message}</span>
+          <span class="issue-loc">${issue.location || ''}</span>
+        </div>
+        <div class="issue-body">
+          <div class="fix-label">💡 How to fix</div>
+          <div class="issue-fix">${issue.fix || 'No fix suggestion available'}</div>
+        </div>
+      </div>
+    `).join('');
+    }
+
+    function toggleIssue(idx) {
+      document.getElementById('issue-' + idx).classList.toggle('expanded');
+    }
+
+    function renderCoding(cd) {
+      const rows = [];
+      if (cd.primary_diagnosis_coding) {
+        const c = cd.primary_diagnosis_coding;
+        rows.push({ term: cd.primary_diagnosis, system: 'ICD-10', code: c.code, display: c.display, confidence: c.confidence, method: c.match_method });
+      }
+      const tests = cd.tests || [];
+      tests.forEach(t => {
+        if (t.loinc_coding) {
+          const c = t.loinc_coding;
+          rows.push({ term: t.test_name, system: 'LOINC', code: c.code, display: c.display, confidence: c.confidence, method: c.match_method });
+        }
+      });
+
+      document.getElementById('codingTableBody').innerHTML = rows.length === 0
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px;">No coded terms found</td></tr>'
+        : rows.map(r => `
+      <tr>
+        <td>${r.term || '-'}</td>
+        <td><span class="info-card-badge ${r.system === 'ICD-10' ? 'badge-red' : 'badge-blue'}">${r.system}</span></td>
+        <td style="color:var(--accent);">${r.code || '—'}</td>
+        <td>${r.display || '—'}</td>
+        <td>
+          <div class="coding-confidence">
+            <div class="conf-bar"><div class="conf-fill" style="width:${r.confidence || 0}%"></div></div>
+            <span style="color:var(--text2)">${r.confidence || 0}%</span>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    }
+
+    function renderConflicts(fusion) {
+      const conflicts = fusion.conflicts || [];
+      const sources = fusion.field_sources || {};
+
+      if (conflicts.length === 0 && Object.keys(sources).length === 0) {
+        document.getElementById('conflictsContent').innerHTML = `
+      <div class="empty-state" style="padding:60px;">
+        <div class="empty-icon">🤝</div>
+        <div class="empty-title">No conflicts detected</div>
+        <div class="empty-desc">All documents are consistent with each other</div>
+      </div>`;
+        return;
+      }
+
+      document.getElementById('conflictsContent').innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-family:var(--mono);color:var(--text3);margin-bottom:10px;text-transform:uppercase;">Document Sources</div>
+      ${Object.entries(sources).slice(0, 10).map(([field, source]) => `
+        <div style="display:flex;gap:16px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:12px;font-family:var(--mono);">
+          <span style="color:var(--accent2);min-width:200px;">${field}</span>
+          <span style="color:var(--text3);">from</span>
+          <span style="color:var(--text2);">${source}</span>
+        </div>
+      `).join('')}
+    </div>
+    ${conflicts.length > 0 ? `
+      <div style="font-size:12px;font-family:var(--mono);color:var(--warning);margin-bottom:10px;text-transform:uppercase;">⚠ Conflicts Detected</div>
+      ${conflicts.map(c => `
+        <div style="background:rgba(255,179,71,0.06);border:1px solid rgba(255,179,71,0.3);border-radius:8px;padding:14px;margin-bottom:8px;">
+          <div style="font-weight:600;color:var(--text);margin-bottom:8px;">${c.field}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;font-family:var(--mono);">
+            <div><div style="color:var(--text3);">${c.document_1}</div><div style="color:var(--text2);">${c.value_1}</div></div>
+            <div><div style="color:var(--text3);">${c.document_2}</div><div style="color:var(--text2);">${c.value_2}</div></div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--accent);">Resolution: ${c.resolution}</div>
+        </div>
+      `).join('')}
+    ` : ''}
+  `;
+    }
+
+    // ─── RESULT TABS ─────────────────────────────────────
+    function showResultTab(tab) {
+      document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.result-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('rtab-' + tab).classList.add('active');
+      document.getElementById('rpanel-' + tab).classList.add('active');
+    }
+
+    // ─── JSON DOWNLOAD/COPY ──────────────────────────────
+    function downloadBundle() {
+      if (!state.result?.fhir_bundle) { showToast('No bundle to download', 'warning'); return; }
+      const blob = new Blob([JSON.stringify(state.result.fhir_bundle, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nhcx_fhir_bundle_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Bundle downloaded!', 'success');
+    }
+
+    function copyBundle() {
+      if (!state.result?.fhir_bundle) return;
+      navigator.clipboard.writeText(JSON.stringify(state.result.fhir_bundle, null, 2));
+      showToast('Copied to clipboard!', 'success');
+    }
+
+    // ─── SYNTAX HIGHLIGHT ────────────────────────────────
+    function syntaxHighlight(json) {
+      return json
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) return `<span class="json-key">${match}</span>`;
+            return `<span class="json-str">${match}</span>`;
+          }
+          if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
+          if (/null/.test(match)) return `<span class="json-null">${match}</span>`;
+          return `<span class="json-num">${match}</span>`;
+        });
+    }
+
+    // ─── HISTORY ─────────────────────────────────────────
+    function saveToHistory(data) {
+      if (!document.getElementById('saveHistory').checked) return;
+      const record = {
+        id: Date.now(),
+        file_name: data.file_name || 'Unknown',
+        doc_type: data.doc_type || (data.pipeline?.detection?.doc_type) || 'unknown',
+        patient_name: data.clinical_data?.patient_name || 'Unknown',
+        hospital_name: data.clinical_data?.hospital_name || 'Unknown',
+        valid: data.validation?.valid || false,
+        score: data.validation?.readiness?.score || 0,
+        created_at: new Date().toLocaleString(),
+        result: data
+      };
+      state.history.unshift(record);
+      if (state.history.length > 50) state.history.pop();
+      localStorage.setItem('nhcx_history', JSON.stringify(state.history));
+      updateStats();
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('historyTableBody');
+      const empty = document.getElementById('historyEmpty');
+
+      if (state.history.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'flex';
+        return;
+      }
+
+      empty.style.display = 'none';
+      tbody.innerHTML = state.history.map((rec, idx) => `
+    <tr onclick="viewHistoryRecord(${idx})">
+      <td style="color:var(--text3);">#${rec.id}</td>
+      <td style="color:var(--text);">${rec.file_name}</td>
+      <td><span class="info-card-badge badge-blue">${rec.doc_type.replace('_', ' ')}</span></td>
+      <td>${rec.patient_name}</td>
+      <td>${rec.hospital_name}</td>
+      <td><span class="status-dot ${rec.valid ? 'valid' : 'invalid'}">${rec.valid ? 'Valid' : 'Invalid'}</span></td>
+      <td style="color:${rec.score >= 75 ? 'var(--success)' : 'var(--warning)'};">${rec.score}/100</td>
+      <td style="color:var(--text3);">${rec.created_at}</td>
+      <td>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="viewHistoryRecord(${idx});event.stopPropagation();">View</button>
+      </td>
+    </tr>
+  `).join('');
+    }
+
+    function viewHistoryRecord(idx) {
+      const record = state.history[idx];
+      if (!record?.result) return;
+      state.result = record.result;
+      showPage('convert');
+      document.getElementById('emptyState').style.display = 'none';
+      renderResults(record.result);
+      document.getElementById('resultsContainer').classList.add('visible');
+      showToast('Loaded from history: ' + record.file_name, 'info');
+    }
+
+    function clearHistory() {
+      if (!confirm('Clear all conversion history?')) return;
+      state.history = [];
+      localStorage.removeItem('nhcx_history');
+      renderHistory();
+      updateStats();
+      showToast('History cleared', 'info');
+    }
+
+    // ─── STATS ───────────────────────────────────────────
+    function updateStats() {
+      document.getElementById('stat-total').textContent = state.history.length;
+    }
+
+    // ─── SETTINGS ────────────────────────────────────────
+    function saveSettings() {
+      const inputVal = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+      if (!inputVal) return showToast('API URL cannot be empty', 'error');
+      state.apiUrl = inputVal;
+      localStorage.setItem('nhcx_api_url', state.apiUrl);
+      document.getElementById('apiUrl').value = state.apiUrl;
+      showToast('Settings saved!', 'success');
+      checkApiStatus(); // immediately verify the new URL
+    }
+
+    async function checkApiStatus() {
+      const statusEl = document.getElementById('apiStatus');
+      // Always read the CURRENT input value, not stale state.apiUrl
+      let url = (document.getElementById('apiUrl')?.value || state.apiUrl).trim();
+      // Auto-correct common mistakes
+      if (url === 'localhost' || url === 'localhost:8000') url = 'http://localhost:8000';
+      if (!url.startsWith('http')) url = 'http://' + url;
+      url = url.replace(/\/$/, '');
+
+      document.getElementById('apiUrl').value = url; // clean up input visually
+
+      statusEl.textContent = 'Checking...';
+      statusEl.style.color = 'var(--text3)';
+      try {
+        const res = await fetch(url + '/health', { signal: AbortSignal.timeout(6000) });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          const geminiOk = data.gemini_key_set !== false;
+          statusEl.textContent = geminiOk
+            ? '✅ Connected — Gemini AI active'
+            : '⚠️ Server up but GEMINI_API_KEY missing';
+          statusEl.style.color = geminiOk ? 'var(--success)' : 'var(--warning)';
+
+          // CRITICAL UX FIX: If check succeeds, auto-save the URL!
+          // This prevents users from clicking "Check", seeing green text, and leaving
+          // without clicking the master "Save Settings" button at the bottom.
+          state.apiUrl = url;
+          localStorage.setItem('nhcx_api_url', url);
+
+        } else {
+          statusEl.textContent = '❌ Server error ' + res.status;
+          statusEl.style.color = 'var(--danger)';
+        }
+      } catch (e) {
+        statusEl.textContent = '❌ Cannot reach: ' + url;
+        statusEl.style.color = 'var(--danger)';
+      }
+    }
+
+    // ─── TOAST ───────────────────────────────────────────
+    function showToast(message, type = 'info') {
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const colors = { success: 'var(--success)', error: 'var(--danger)', warning: 'var(--warning)', info: 'var(--accent2)' };
+
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.borderColor = colors[type];
+      toast.innerHTML = `
+    <span class="toast-icon">${icons[type]}</span>
+    <span class="toast-text">${message}</span>
+  `;
+
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => toast.style.opacity = '0', 3500);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // ─── DOCS ────────────────────────────────────────────
+    function scrollToDoc(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      document.querySelectorAll('.docs-nav-link').forEach(l => l.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // ─── INIT ────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      updateStats();
+
+      // Aggressively sanitize bad localStorage value
+      let stored = localStorage.getItem('nhcx_api_url');
+      if (stored) {
+        // If it's corrupted (contains "undefined", "null", or doesn't start with "http"), nuke it
+        if (stored.includes('undefined') || stored.includes('null') || stored.trim() === '' || !stored.startsWith('http') || stored.includes('http://localhohttp')) {
+          localStorage.removeItem('nhcx_api_url');
+          stored = null;
+        }
+      }
+
+      // Recompute apiUrl cleanly
+      state.apiUrl = stored
+        || (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:8000'
+          : window.location.origin);
+
+      const apiInput = document.getElementById('apiUrl');
+      if (apiInput) apiInput.value = state.apiUrl;
+
+      // Auto-run health check so Settings shows status immediately
+      checkApiStatus();
+    });
+  </script>
+</body>
+
+</html>

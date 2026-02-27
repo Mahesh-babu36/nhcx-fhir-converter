@@ -1,0 +1,26 @@
+# config/mapping.yaml
+# --------------------
+# Global configuration for the NHCX FHIR Converter.
+# Edit this file to adapt to your hospital's document layouts.
+
+hospital:
+  default_template: default
+  max_pdfs_per_claim: 5
+
+ai:
+  model: gemini-1.5-flash
+  max_text_chars: 12000
+  temperature: 0.1
+
+coding:
+  icd10_fuzzy_threshold: 0.60
+  loinc_fuzzy_threshold: 0.65
+
+detection:
+  min_confidence_percent: 30.0
+  min_text_chars: 50
+
+fhir:
+  bundle_type: document
+  default_use_case: claim
+  nrces_base: "https://nrces.in/ndhm/fhir/r4/StructureDefinition/"
