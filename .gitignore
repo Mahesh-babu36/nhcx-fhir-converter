@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+conversions.db
+*.tar.gz
+.DS_Store
