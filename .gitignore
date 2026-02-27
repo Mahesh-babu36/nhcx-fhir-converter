@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 *.db
 .env
+downloads
+downloads.pub
+*.pdf
+dummy*
+test_*.txt
