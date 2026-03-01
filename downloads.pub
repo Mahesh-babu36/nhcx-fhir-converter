@@ -1,0 +1,1 @@
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEaGCs0mjB2ifmq4LKlBeX5tBwVXgK2//LVSaPomVNJs ssh-keygen -t ed25519 -C your_github_email@example.com
